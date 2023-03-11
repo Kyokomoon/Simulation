@@ -184,8 +184,8 @@ int find(int id1, int id2, Object * stek, int count_obj, int count_mov, int mash
 	cout << "\nКоординаты 2 точки в декартовой системе" << x2<<", "<< y2<<")";
     cout << "\nКоординаты 1 точки в  системе Lat long: " << lat1<<" Гр Широты, "<< lon1<<" Гр Долготы)";
     cout << "\nКоординаты 2 точки в  системе Lat long: " << lat2<<" Гр Широты, "<< lon2<<" Гр Долготы)";
-	cout << "\nПройденное расстояние 1 точки (" <<way1<<"метров"<<endl;
-	cout << "\nПройденное расстояние 2 точки (" <<way2<<"метров"<<endl;
+	cout << "\nПройденное расстояние 1 точки (" <<way1<<" метров)"<<endl;
+	cout << "\nПройденное расстояние 2 точки (" <<way2<<" метров)"<<endl;
 	rast=sqrt(pow((x2-x1),2)+ pow((y2-y1),2));
 	return rast;
 }
@@ -262,7 +262,7 @@ int main(){
 	choice = 0;
     int id_1,id_2, rasst;
 	while(choice!=2){
-		cout<< "\n\nХотите узнать расстояние между точками?1-Da 2-Net : ";
+		cout<< "\n\nХотите узнать расстояние между точками? 1-Da 2-Net : ";
 		cin >> choice;
 		if(choice == 1){
 			cout << ("\nВведите ID 1точки: ");
@@ -270,7 +270,7 @@ int main(){
 			cout << ("\nВведите ID 2точки: ");
 			cin >> id_2;
 			rasst=find(id_1,id_2,stek,count_obj, count_mov,mash);
-			cout << "\n\nРасстояние между точками равно " << rasst<< "метров" << endl;
+			cout << "\n\nРасстояние между точками равно: " << rasst<< " метров" << endl;
 		}
 		else if(choice == 2)cout << "\nПрограмма завершена";
 		else cout << "\nError:Неверная команда\n";
