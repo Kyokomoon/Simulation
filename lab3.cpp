@@ -5,25 +5,25 @@
 #include <unistd.h> 
 using namespace std;
 #define size_field 1000
+#define Lat1_point_map 55.146316 
+#define Long1_point_map 82.719252
+#define Lat2_point_map 54.848216 
+#define Long2_point_map 83.276841
+#define PlanetRadius  6372.795  //Km
+#define radian  0.0174532   //1градус в радианах
 class Coordinates
 {
     private:
         int cord_X;
         int cord_Y;
-        double Lat;
-        double Long;
     public:
         Coordinates(int x, int y){
             cord_X = x;
             cord_Y = y;
-            Lat = -1;
-            Long = -1;
         }
         Coordinates(){
 		cord_X = -1;
 		cord_Y = -1;
-        Lat = -1;
-        Long = -1;
         }
         void setCord(int x, int y){
             cord_X = x;
@@ -38,19 +38,6 @@ class Coordinates
             }
 		    else return -1;
         }
-        double getLangLongCord(int choice_cord){
-            if(choice_cord == 0){
-                return Long;
-            }
-            else if(choice_cord == 1){
-                return Lat;
-            }
-		    else return -1;
-        }
-        void convertInLatLong(int cord_x , int cord_y){ //при условии, если поле занимает 1/4 сферы
-            Lat = cord_y * ((float)90/size_field); //Широта
-            Long = cord_x * ((float)180/size_field); //Долгота
-        }
         ~Coordinates(){
         }
 };
@@ -63,14 +50,14 @@ class Object
         Coordinates *memory;
     public:
         Object(int id, int x, int y){
-            Id = id;
+            this->Id = id;
             cord.setCord(x,y);
-            Distance = 0;
+            this->Distance = 0;
         }
 	    Object(){
-            Id = 0;
+            this->Id = 0;
             cord.setCord(-1,-1);
-            Distance = 0;
+            this->Distance = 0;
 	    }
         void memoryInit(int count_mov){
             memory = new Coordinates[count_mov];
@@ -104,19 +91,19 @@ class Object
 		else return -1;
         }
         void move(int direct, int mash, int mov){
-            if(direct == 1 && cord.getCord(1)+mash<size_field){ //Вверх
+            if(direct == 1 && cord.getCord(1)+mash<=size_field){ //Вверх
                 cord.setCord(cord.getCord(0), cord.getCord(1)+mash);
                 Distance += mash;
             }
-            if(direct == 2 && cord.getCord(0)-mash>0){//Влево
+            if(direct == 2 && cord.getCord(0)-mash>=0){//Влево
                 cord.setCord(cord.getCord(0)-mash, cord.getCord(1));
                 Distance += mash;
             }
-            if(direct == 3 && cord.getCord(0)+mash<size_field){//Вправо
+            if(direct == 3 && cord.getCord(0)+mash<=size_field){//Вправо
                 cord.setCord(cord.getCord(0)+mash, cord.getCord(1));
                 Distance += mash;
             }
-            if(direct == 4 && cord.getCord(1)-mash>0){//Вниз
+            if(direct == 4 && cord.getCord(1)-mash>=0){//Вниз
                 cord.setCord(cord.getCord(0), cord.getCord(1)-mash);
                 Distance += mash;
             }
@@ -128,18 +115,40 @@ class Object
         int getlengthWay(){
             return Distance;
         }
-        void convertLatLongCord(){
-            cord.convertInLatLong(cord.getCord(0), cord.getCord(1));
-        }
-        double getLatLongCord(int choice_cord){
-            return cord.getLangLongCord(choice_cord);
-        }
         ~Object(){
 		delete[] memory;
         }
 };
-
-void rando(Object * stek, int count_obj, int count_mov, int mash){ //рандомное перемещение
+class UserEquipment : public Object { //Наследуемый класс 
+    private:
+        double Lat; //широта
+        double Long; //долгота
+    public:
+        UserEquipment() : Object(){
+            Lat = -1;
+            Long = -1;
+        }
+        UserEquipment(int id, int x, int y) :   
+        Object(id, x, y){ //конвертируется автоматически 
+            Lat = Lat2_point_map + y * ((Lat1_point_map - Lat2_point_map)/size_field); //конвертация в широту
+            Long = Long1_point_map + x * ((Long2_point_map- Long1_point_map)/size_field); //конвертация в долготу
+        }
+        void convertLatLongCord(int x, int y){ //конвертируем в ручную
+            Lat = Lat2_point_map + y * ((Lat1_point_map - Lat2_point_map)/size_field); //конвертация в широту
+            Long = Long1_point_map + x * ((Long2_point_map- Long1_point_map)/size_field); //конвертация в долготу
+        }
+        double getLatLong(int choice_cord){//получаем широту или долготу
+            if(choice_cord == 0){
+                return Lat;
+            }
+            else if(choice_cord == 1){
+                return Long;
+            }
+        }
+        ~UserEquipment(){
+        };
+};
+void rando(UserEquipment * stek, int count_obj, int count_mov, int mash){ //рандомное перемещение
     int direct, i, obj;
     for(obj=0;obj<count_obj;obj++){
         for(i=1;i<count_mov;i++){
@@ -152,41 +161,64 @@ void rando(Object * stek, int count_obj, int count_mov, int mash){ //рандо�
     }
 }
 //заглушки
-void rand_way(Object * stek, int count_obj, int count_mov, int mash){
+void rand_way(UserEquipment * stek, int count_obj, int count_mov, int mash){
 }
-void Gaus(Object * stek, int count_obj, int count_mov, int mash){
+void Gaus(UserEquipment * stek, int count_obj, int count_mov, int mash){
 }
-void Chain(Object * stek, int count_obj, int count_mov, int mash){
+void Chain(UserEquipment * stek, int count_obj, int count_mov, int mash){
 }
-int find(int id1, int id2, Object * stek, int count_obj, int count_mov, int mash){//найти расстояние
-	int i, j,rast, a,b,d, x1,y1, x2,y2, way1,way2;
-    double lat1, lon1 , lat2, lon2;
-	for(i=0;i<count_obj;i++){
-		if(id1 == stek[i].getId()){ //находит координаты указанных объектов
-			x1=stek[i].getCord(0);
-			y1=stek[i].getCord(1);
-			way1 = stek[i].getlengthWay();
-            stek[i].convertLatLongCord();
-            lat1 = stek[i].getLatLongCord(1);
-            lon1 = stek[i].getLatLongCord(0);
+int find(int id1, int id2, UserEquipment * stek, int count_obj, int count_mov, int mash){//найти расстояние
+	int i, j,rast, a,b,d, x1,y1, x2,y2, way1,way2,choice_mode;
+    double lat1=0, lon1 , lat2=0, lon2, delta_lat_in_rad, delta_long_in_rad, sred_lat;
+    cout << "\nВыберете вариант вычисления расстояния: В классическом режиме-1, в режиме Lat Long-2: "; //Можно выбрать в каком режиме считать расстояние 
+    cin >> choice_mode;
+    if(choice_mode == 1){
+        for(i=0;i<count_obj;i++){
+            
+            if(id1 == stek[i].getId()){ //находит координаты указанных объектов
+                x1=stek[i].getCord(0);
+                y1=stek[i].getCord(1);
+                way1 = stek[i].getlengthWay();
 
-		}
-		if(id2 == stek[i].getId()){
-			x2=stek[i].getCord(0);
-			y2=stek[i].getCord(1);
-			way2 = stek[i].getlengthWay();
-            stek[i].convertLatLongCord();
-            lat2 = stek[i].getLatLongCord(1);
-            lon2 = stek[i].getLatLongCord(0);
-		}
-	}
-	cout << "\nКоординаты 1 точки в декартовой системе" << x1<<", "<< y1<<")";
-	cout << "\nКоординаты 2 точки в декартовой системе" << x2<<", "<< y2<<")";
-    cout << "\nКоординаты 1 точки в  системе Lat long: " << lat1<<" Гр Широты, "<< lon1<<" Гр Долготы)";
-    cout << "\nКоординаты 2 точки в  системе Lat long: " << lat2<<" Гр Широты, "<< lon2<<" Гр Долготы)";
-	cout << "\nПройденное расстояние 1 точки (" <<way1<<" метров)"<<endl;
-	cout << "\nПройденное расстояние 2 точки (" <<way2<<" метров)"<<endl;
-	rast=sqrt(pow((x2-x1),2)+ pow((y2-y1),2));
+            }
+            if(id2 == stek[i].getId()){
+                x2=stek[i].getCord(0);
+                y2=stek[i].getCord(1);
+                way2 = stek[i].getlengthWay();
+            }
+        }
+        cout << "\nКоординаты 1 точки в декартовой системе" << x1<<", "<< y1<<")";
+	    cout << "\nКоординаты 2 точки в декартовой системе" << x2<<", "<< y2<<")";
+        cout << "\nПройденное расстояние 1 точки (" <<way1<<" метров)"<<endl;
+	    cout << "\nПройденное расстояние 2 точки (" <<way2<<" метров)"<<endl;
+        rast=sqrt(pow((x2-x1),2)+ pow((y2-y1),2));
+    }
+    else{
+        for(i=0;i<count_obj;i++){
+            if(id1 == stek[i].getId()){ //находит координаты указанных объектов
+                x1=stek[i].getCord(0);
+                y1=stek[i].getCord(1);
+                stek[i].convertLatLongCord(x1,y1);//конвертация в широту и долготу
+                //way1 = stek[i].getlengthWay();
+                lat1 =stek[i].getLatLong(0);//получение широты
+                lon1 =stek[i].getLatLong(1);//получение долготы
+            }
+            if(id2 == stek[i].getId()){
+                x2=stek[i].getCord(0);
+                y2=stek[i].getCord(1);
+                stek[i].convertLatLongCord(x2,y2);//конвертация в широту и долготу
+                //way2 = stek[i].getlengthWay();
+                lat2 =stek[i].getLatLong(0);//получение широты
+                lon2 =stek[i].getLatLong(1);//получение долготы
+            }
+        }
+        delta_lat_in_rad = ((radian*lat1) - (radian * lat2)); //Разница широт в радианах
+        delta_long_in_rad = ((radian*lon1) - (radian * lon2)); //разница долготы в радианах
+        sred_lat = (lat1+lat2)/2; //средняя широта
+        cout << "\nКоординаты 1 точки в  системе Lat long: " << lat1<<" Гр Широты, "<< lon1<<" Гр Долготы)";
+        cout << "\nКоординаты 2 точки в  системе Lat long: " << lat2<<" Гр Широты, "<< lon2<<" Гр Долготы)";
+	    rast = PlanetRadius * sqrt(pow(delta_lat_in_rad,2)+ pow((cos(sred_lat*radian)*delta_long_in_rad),2)); //расстояние между точками
+    }
 	return rast;
 }
 int main(){
@@ -198,13 +230,13 @@ int main(){
     cin >> count_obj;
     cout << "\nВведите количество движений: ";
     cin >> count_mov;
-    Object *stek = new Object[count_obj]; //выделение памяти для массива
+    UserEquipment *stek = new UserEquipment[count_obj]; //выделение памяти для массива
     for(i=0;i<count_obj;i++){
         stek[i].memoryInit(count_mov);
     }
 
     for(i=0;i<count_obj;i++){
-        cout << "\nВведите ID объекта № " << i+1 <<" ";  // Пока что id нужно вводить вручную, проверка на одинаковые значения пока не предусмотренна 
+        cout << "\nВведите ID объекта № " << i+1 <<" ";  // Пока что id нужно вводить вручную
         cin >> id;
         chek = 0;
         for(j=0;j<count_obj;j++){
@@ -244,8 +276,8 @@ int main(){
 	for(mov=0;mov<count_mov;mov++){
 		sleep(1); // задержка 1 секунда
         system("clear");
-        for(i=(size_field/mash);i>0;i--){
-            for(j=0;j<(size_field/mash);j++){
+        for(i=(size_field/mash);i>=0;i--){
+            for(j=0;j<=(size_field/mash);j++){
 		        chek=0;
                 for(objt=0;objt<count_obj;objt++){
                     if(i==((stek[objt].memoryGet(mov,1))/mash) && j == ((stek[objt].memoryGet(mov,0))/mash)){ //если встречается координата объекта
@@ -270,7 +302,7 @@ int main(){
 			cout << ("\nВведите ID 2точки: ");
 			cin >> id_2;
 			rasst=find(id_1,id_2,stek,count_obj, count_mov,mash);
-			cout << "\n\nРасстояние между точками равно: " << rasst<< " метров" << endl;
+			cout << "\n\nРасстояние между точками равно: " << rasst<< " Километров" << endl;
 		}
 		else if(choice == 2)cout << "\nПрограмма завершена";
 		else cout << "\nError:Неверная команда\n";
